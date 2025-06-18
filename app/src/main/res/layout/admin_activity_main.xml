@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Judul -->
+        <TextView
+            android:id="@+id/tv_admin_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Admin Panel"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Tombol Aksi -->
+        <Button
+            android:id="@+id/btn_view_accounts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lihat Akun" />
+
+        <Button
+            android:id="@+id/btn_add_news"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tambah Berita"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/btn_logout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@android:color/holo_red_dark"
+            android:textColor="@android:color/white" />
+
+        <!-- Judul List -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="List Berita"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- RecyclerView untuk berita -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewNews"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+    </LinearLayout>
+</ScrollView>
