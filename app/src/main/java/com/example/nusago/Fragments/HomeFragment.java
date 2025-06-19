@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +31,8 @@ public class HomeFragment extends Fragment {
 
     private final List<Event> eventList = new ArrayList<>();
     private List<News> newsList = new ArrayList<>();
+
+    private TextView tvLoading;
 
     @Nullable
     @Override
@@ -61,11 +64,49 @@ public class HomeFragment extends Fragment {
                 newsList = (ArrayList<News>) obj;
             }
         }
-        Log.d("HOME_FRAGMENT", "Jumlah news: " + newsList.size());
+
+        tvLoading = v.findViewById(R.id.tv_loading);
+
+        tvLoading.setVisibility(View.VISIBLE);
+        recyclerViewNews.setVisibility(View.GONE);
+
+        if (getArguments() != null) {
+            Object obj = getArguments().getSerializable("news_list");
+            if (obj instanceof ArrayList<?>) {
+                //noinspection unchecked
+                newsList = (ArrayList<News>) obj;
+            }
+        }
+
+        if (!newsList.isEmpty()) {
+            tvLoading.setVisibility(View.GONE);
+            recyclerViewNews.setVisibility(View.VISIBLE);
+        }
 
         newsAdapter = new NewsAdapter(requireContext(), newsList);
+
+        newsAdapter = new NewsAdapter(requireContext(), newsList);
+
+        /* ── handle klik ─────────────────────────────────────────── */
+        newsAdapter.setOnItemClickListener(newsId -> {
+            Bundle bundle = new Bundle();
+            bundle.putInt("news_id", newsId);
+
+            NewsDetailFragment detailFragment = new NewsDetailFragment();
+            detailFragment.setArguments(bundle);
+
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, detailFragment)   // ganti ID container sesuai layout activity
+                    .addToBackStack(null)
+                    .commit();
+        });
+        /* ────────────────────────────────────────────────────────── */
+
         recyclerViewNews.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerViewNews.setAdapter(newsAdapter);
+
 
         return v;
     }
