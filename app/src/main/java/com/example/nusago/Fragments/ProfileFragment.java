@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import com.example.nusago.Activities.Auth.LoginActivity;
 import com.example.nusago.Activities.Auth.RegistrationActivity;
 import com.example.nusago.R;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class ProfileFragment extends Fragment {
 
@@ -37,6 +38,8 @@ public class ProfileFragment extends Fragment {
         btnRegister = view.findViewById(R.id.btn_register);
         btnLogout = view.findViewById(R.id.btn_logout);
 
+        FloatingActionButton btnEdit = view.findViewById(R.id.fab_edit_account);
+
         boolean isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false);
 
         if (isLoggedIn) {
@@ -54,6 +57,18 @@ public class ProfileFragment extends Fragment {
             btnRegister.setVisibility(View.GONE);
             btnLogout.setVisibility(View.VISIBLE);
 
+            // Tampilkan FAB edit akun
+            btnEdit.setVisibility(View.VISIBLE);
+
+            // Set click listener
+            btnEdit.setOnClickListener(v -> {
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new ProfileEditFragment())
+                        .addToBackStack(null)
+                        .commit();
+            });
+
         } else {
             // User belum login
             tvName.setText("Nama: -");
@@ -63,6 +78,9 @@ public class ProfileFragment extends Fragment {
             btnLogin.setVisibility(View.VISIBLE);
             btnRegister.setVisibility(View.VISIBLE);
             btnLogout.setVisibility(View.GONE);
+
+            // Sembunyikan FAB edit akun
+            btnEdit.setVisibility(View.GONE);
         }
 
         // Aksi tombol Login
