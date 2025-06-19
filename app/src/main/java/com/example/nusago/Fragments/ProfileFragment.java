@@ -22,7 +22,7 @@ public class ProfileFragment extends Fragment {
     private SharedPreferences sharedPreferences;
 
     private TextView tvName, tvEmail, tvRole;
-    private Button btnLogin, btnRegister, btnLogout;
+    private Button btnLogin, btnRegister, btnLogout, btnAddNews;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -37,13 +37,13 @@ public class ProfileFragment extends Fragment {
         btnLogin = view.findViewById(R.id.btn_login);
         btnRegister = view.findViewById(R.id.btn_register);
         btnLogout = view.findViewById(R.id.btn_logout);
+        btnAddNews = view.findViewById(R.id.btn_add_news);
 
         FloatingActionButton btnEdit = view.findViewById(R.id.fab_edit_account);
 
         boolean isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false);
 
         if (isLoggedIn) {
-            // Ambil data akun dari sharedPreferences
             String name = sharedPreferences.getString("name", "-");
             String email = sharedPreferences.getString("email", "-");
             String role = sharedPreferences.getString("role", "-");
@@ -52,15 +52,25 @@ public class ProfileFragment extends Fragment {
             tvEmail.setText("Email: " + email);
             tvRole.setText("Role: " + role);
 
-            // Sembunyikan login & register, tampilkan logout
             btnLogin.setVisibility(View.GONE);
             btnRegister.setVisibility(View.GONE);
             btnLogout.setVisibility(View.VISIBLE);
-
-            // Tampilkan FAB edit akun
             btnEdit.setVisibility(View.VISIBLE);
 
-            // Set click listener
+            // Tampilkan tombol tambah berita jika role adalah admin
+            if (role.equalsIgnoreCase("admin")) {
+                btnAddNews.setVisibility(View.VISIBLE);
+                btnAddNews.setOnClickListener(v -> {
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, new NewsCreateFragment()) // Pastikan kamu punya fragment ini
+                            .addToBackStack(null)
+                            .commit();
+                });
+            } else {
+                btnAddNews.setVisibility(View.GONE);
+            }
+
             btnEdit.setOnClickListener(v -> {
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
@@ -70,7 +80,6 @@ public class ProfileFragment extends Fragment {
             });
 
         } else {
-            // User belum login
             tvName.setText("Nama: -");
             tvEmail.setText("Email: -");
             tvRole.setText("Role: -");
@@ -78,30 +87,25 @@ public class ProfileFragment extends Fragment {
             btnLogin.setVisibility(View.VISIBLE);
             btnRegister.setVisibility(View.VISIBLE);
             btnLogout.setVisibility(View.GONE);
-
-            // Sembunyikan FAB edit akun
             btnEdit.setVisibility(View.GONE);
+            btnAddNews.setVisibility(View.GONE); // Juga disembunyikan jika belum login
         }
 
-        // Aksi tombol Login
         btnLogin.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), LoginActivity.class);
             startActivity(intent);
         });
 
-        // Aksi tombol Register
         btnRegister.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), RegistrationActivity.class);
             startActivity(intent);
         });
 
-        // Aksi tombol Logout
         btnLogout.setOnClickListener(v -> {
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.clear();
             editor.apply();
-            // Refresh fragment
-            requireActivity().recreate(); // Atau load ulang fragment jika ingin lebih ringan
+            requireActivity().recreate(); // reload seluruh aktivitas
         });
 
         return view;
