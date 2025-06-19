@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.nusago.Adapters.EventAdapter;
 import com.example.nusago.Adapters.NewsAdapter;
-import com.example.nusago.Dialogs.DeleteNews;
 import com.example.nusago.Fetcher.NewsFetcher;
 import com.example.nusago.Models.Event;
 import com.example.nusago.Models.News;
@@ -30,23 +29,20 @@ import java.util.List;
 
 public class HomeFragment extends Fragment {
 
-    /* ------------------------------------------------------------------ */
-    /* View & adapter                                                     */
-    /* ------------------------------------------------------------------ */
     private RecyclerView recyclerViewEvents, recyclerViewNews;
     private EventAdapter eventAdapter;
-    private NewsAdapter  newsAdapter;
-    private TextView     tvLoading;
+    private NewsAdapter newsAdapter;
+    private TextView tvLoading;
 
-    /* ------------------------------------------------------------------ */
-    /* Data sources                                                       */
-    /* ------------------------------------------------------------------ */
     private final List<Event> eventList = new ArrayList<>();
     private List<News> newsList = new ArrayList<>();
 
-    /* ------------------------------------------------------------------ */
-    /* Lifecycle                                                          */
-    /* ------------------------------------------------------------------ */
+    @Override
+    public void onResume() {
+        super.onResume();
+        fetchNews();
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -55,28 +51,21 @@ public class HomeFragment extends Fragment {
 
         View v = inflater.inflate(R.layout.fragment_home, container, false);
 
-        /* ----- init view ----- */
         recyclerViewEvents = v.findViewById(R.id.recyclerViewEvents);
-        recyclerViewNews   = v.findViewById(R.id.recyclerViewNews);
-        tvLoading          = v.findViewById(R.id.tv_loading);
-
-        /* ----- dummy events (bisa ganti API) ----- */
-        // eventList.add(...)
+        recyclerViewNews = v.findViewById(R.id.recyclerViewNews);
+        tvLoading = v.findViewById(R.id.tv_loading);
 
         eventAdapter = new EventAdapter(eventList);
         recyclerViewEvents.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         recyclerViewEvents.setAdapter(eventAdapter);
 
-        /* ----- Ambil daftar news dari arguments (atau API) ----- */
         if (getArguments() != null) {
             Object obj = getArguments().getSerializable("news_list");
             if (obj instanceof ArrayList<?>) {
-                //noinspection unchecked
                 newsList = (ArrayList<News>) obj;
             }
         }
 
-        /* ----- tampilkan loading saat list kosong ----- */
         if (newsList.isEmpty()) {
             tvLoading.setVisibility(View.VISIBLE);
             recyclerViewNews.setVisibility(View.GONE);
@@ -85,16 +74,11 @@ public class HomeFragment extends Fragment {
             recyclerViewNews.setVisibility(View.VISIBLE);
         }
 
-        /* ------------------------------------------------------------------ */
-        /* Inisialisasi NewsAdapter + role admin                               */
-        /* ------------------------------------------------------------------ */
-        SharedPreferences prefs = requireActivity()
-                .getSharedPreferences("auth", Context.MODE_PRIVATE);
-        String role = prefs.getString("role", "user");   // "admin" / "user"
+        SharedPreferences prefs = requireActivity().getSharedPreferences("auth", Context.MODE_PRIVATE);
+        String role = prefs.getString("role", "user");
 
         newsAdapter = new NewsAdapter(requireContext(), newsList, role);
 
-        /* ----- klik item → buka detail ----- */
         newsAdapter.setOnItemClickListener(newsId -> {
             Bundle bundle = new Bundle();
             bundle.putInt("news_id", newsId);
@@ -102,32 +86,37 @@ public class HomeFragment extends Fragment {
             NewsDetailFragment detailFragment = new NewsDetailFragment();
             detailFragment.setArguments(bundle);
 
-            requireActivity()
-                    .getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, detailFragment)
-                    .addToBackStack(null)
-                    .commit();
+            if (isAdded()) {
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, detailFragment)
+                        .addToBackStack(null)
+                        .commit();
+            }
         });
 
-        /* ----- aksi admin: Edit & Delete ----- */
         newsAdapter.setAdminActionListener(new NewsAdapter.AdminActionListener() {
-            @Override public void onEdit(int id) {
-                // TODO: buka form EditNewsFragment, kirim id
+            @Override
+            public void onEdit(int id) {
                 Bundle b = new Bundle();
                 b.putInt("news_id", id);
-//                EditNewsFragment f = new EditNewsFragment();
-//                f.setArguments(b);
 
-//                requireActivity().getSupportFragmentManager()
-//                        .beginTransaction()
-//                        .replace(R.id.fragment_container, f)
-//                        .addToBackStack(null)
-//                        .commit();
+                NewsEditFragment f = new NewsEditFragment();
+                f.setArguments(b);
+
+                if (isAdded()) {
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, f)
+                            .addToBackStack(null)
+                            .commit();
+                }
             }
 
             @Override
             public void onDelete(int id) {
+                if (!isAdded()) return;
+
                 new AlertDialog.Builder(requireContext())
                         .setTitle("Konfirmasi Hapus")
                         .setMessage("Apakah Anda yakin ingin menghapus berita ini?")
@@ -135,28 +124,18 @@ public class HomeFragment extends Fragment {
                             NewsFetcher.deleteNews(id, new NewsFetcher.DeleteCallback() {
                                 @Override
                                 public void onSuccess(String response) {
+                                    if (!isAdded()) return;
+
                                     requireActivity().runOnUiThread(() -> {
+                                        if (!isAdded()) return;
                                         Toast.makeText(requireContext(), "Berita berhasil dihapus", Toast.LENGTH_SHORT).show();
-
-                                        // Fetch ulang data
-                                        new NewsFetcher(new NewsFetcher.Callback() {
-                                            @Override
-                                            public void onResult(ArrayList<News> updatedNewsList) {
-                                                newsList.clear();
-                                                newsList.addAll(updatedNewsList);
-                                                newsAdapter.notifyDataSetChanged();
-                                            }
-
-                                            @Override
-                                            public void onError(Exception e) {
-                                                Toast.makeText(requireContext(), "Gagal memuat ulang berita", Toast.LENGTH_SHORT).show();
-                                            }
-                                        }).execute();
+                                        fetchNews();
                                     });
                                 }
 
                                 @Override
                                 public void onError(Exception e) {
+                                    if (!isAdded()) return;
                                     requireActivity().runOnUiThread(() ->
                                             Toast.makeText(requireContext(), "Gagal menghapus", Toast.LENGTH_SHORT).show()
                                     );
@@ -168,10 +147,42 @@ public class HomeFragment extends Fragment {
             }
         });
 
-
         recyclerViewNews.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerViewNews.setAdapter(newsAdapter);
 
         return v;
+    }
+
+    private void fetchNews() {
+        if (!isAdded()) return;
+
+        tvLoading.setVisibility(View.VISIBLE);
+        recyclerViewNews.setVisibility(View.GONE);
+
+        new NewsFetcher(new NewsFetcher.Callback() {
+            @Override
+            public void onResult(ArrayList<News> updatedNewsList) {
+                if (!isAdded()) return;
+
+                requireActivity().runOnUiThread(() -> {
+                    if (!isAdded()) return;
+                    tvLoading.setVisibility(View.GONE);
+                    recyclerViewNews.setVisibility(View.VISIBLE);
+
+                    newsList.clear();
+                    newsList.addAll(updatedNewsList);
+                    newsAdapter.notifyDataSetChanged();
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() -> {
+                    if (!isAdded()) return;
+                    Toast.makeText(requireContext(), "Gagal memuat data berita", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).execute();
     }
 }
