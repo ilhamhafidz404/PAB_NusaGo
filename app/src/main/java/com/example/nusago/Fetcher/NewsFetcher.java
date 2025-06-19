@@ -18,26 +18,40 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 
 public class NewsFetcher extends AsyncTask<Void, Void, ArrayList<News>> {
-
-    /* ---------------------- Callback utama ---------------------- */
     public interface Callback {
         void onResult(ArrayList<News> newsList);
         void onError(Exception e);
     }
 
     private final WeakReference<Callback> callbackRef;
+    private final int limit;
+    private final String query;
     private Exception exception;
 
+    // Konstruktor tanpa filter
     public NewsFetcher(Callback callback) {
+        this(-1, null, callback);
+    }
+
+    // Konstruktor dengan limit dan query
+    public NewsFetcher(int limit, String query, Callback callback) {
+        this.limit = limit;
+        this.query = query;
         this.callbackRef = new WeakReference<>(callback);
     }
 
-    /* ---------------------- Jalankan di background ---------------------- */
+    // ================= Background fetch =================
     @Override
     protected ArrayList<News> doInBackground(Void... voids) {
         ArrayList<News> newsList = new ArrayList<>();
         try {
-            URL url = new URL("https://nusago.alope.id/news");
+            String safeQuery = (query == null) ? "" : query;
+            String endpoint = (limit > 0)
+                    ? "https://nusago.alope.id/news?limit=" + limit + "&query=" + URLEncoder.encode(safeQuery, "UTF-8")
+                    : "https://nusago.alope.id/news?query=" + URLEncoder.encode(safeQuery, "UTF-8");
+
+
+            URL url = new URL(endpoint);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(5000);
@@ -58,15 +72,15 @@ public class NewsFetcher extends AsyncTask<Void, Void, ArrayList<News>> {
                 JSONArray dataArr = root.getJSONArray("data");
                 for (int i = 0; i < dataArr.length(); i++) {
                     JSONObject o = dataArr.getJSONObject(i);
-                    int id = o.getInt("id");
-                    String title = o.getString("title");
-                    String image = o.isNull("image") ? null : o.getString("image");
-                    String desc = o.getString("description");
-                    String body = o.getString("body");
-                    int userId = o.getInt("user_id");
-                    String createdAt = o.getString("created_at");
-
-                    newsList.add(new News(id, title, image, desc, body, userId, createdAt));
+                    newsList.add(new News(
+                            o.getInt("id"),
+                            o.getString("title"),
+                            o.isNull("image") ? null : o.getString("image"),
+                            o.getString("description"),
+                            o.getString("body"),
+                            o.getInt("user_id"),
+                            o.getString("created_at")
+                    ));
                 }
             } else {
                 throw new Exception("HTTP error code: " + conn.getResponseCode());
@@ -78,17 +92,13 @@ public class NewsFetcher extends AsyncTask<Void, Void, ArrayList<News>> {
         return newsList;
     }
 
-    /* ---------------------- Kirim hasil ke UI ---------------------- */
     @Override
     protected void onPostExecute(ArrayList<News> result) {
         Callback cb = callbackRef.get();
         if (cb == null) return;
 
-        if (exception != null) {
-            cb.onError(exception);
-        } else {
-            cb.onResult(result);
-        }
+        if (exception != null) cb.onError(exception);
+        else cb.onResult(result);
     }
 
     /* ---------------------- DELETE berita (static) ---------------------- */
