@@ -35,7 +35,7 @@ public class ProfileEditFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_edit, container, false);
 
-//        Handle Back
+
         FloatingActionButton btnBack = view.findViewById(R.id.fab_back_edit_account);
         btnBack.setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager()
@@ -54,8 +54,8 @@ public class ProfileEditFragment extends Fragment {
         SharedPreferences sp = requireActivity()
                 .getSharedPreferences("auth", Context.MODE_PRIVATE);
 
-        userId = sp.getInt("id", 0);                 // id user
-        String savedName  = sp.getString("name", ""); // "" = default jika kosong
+        userId = sp.getInt("id", 0);
+        String savedName  = sp.getString("name", "");
         String savedEmail = sp.getString("email", "");
 
         //

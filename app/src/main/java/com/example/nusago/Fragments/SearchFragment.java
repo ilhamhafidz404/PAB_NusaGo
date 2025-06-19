@@ -38,7 +38,6 @@ public class SearchFragment extends Fragment {
 
     private final List<News> newsList = new ArrayList<>();
 
-    /* ------------ ganti sesuai kebutuhan ------------ */
     private static final int LIMIT = 20;
 
     @Nullable
@@ -54,10 +53,9 @@ public class SearchFragment extends Fragment {
         progressBar  = view.findViewById(R.id.progress_search);
         etSearch     = view.findViewById(R.id.et_search);
 
-        /* Ambil role & user‑id dari session */
         SharedPreferences prefs = requireActivity()
                 .getSharedPreferences("auth", Context.MODE_PRIVATE);
-        String role  = prefs.getString("role", "user"); // "admin" | "manager" | "user"
+        String role  = prefs.getString("role", "user");
         int userId   = prefs.getInt("id", 0);
 
         etSearch.setOnEditorActionListener((TextView v, int actionId, KeyEvent event) -> {
@@ -92,7 +90,6 @@ public class SearchFragment extends Fragment {
                     .commit();
         });
 
-        /* Tombol Edit & Delete (hanya muncul bila admin/manager) */
         newsAdapter.setAdminActionListener(new NewsAdapter.AdminActionListener() {
             @Override public void onEdit(int id) {
                 Bundle b = new Bundle();
@@ -118,7 +115,6 @@ public class SearchFragment extends Fragment {
             }
         });
 
-        /* Search saat tekan enter/ikon search di keyboard */
         etSearch.setOnEditorActionListener((TextView v, int actionId, KeyEvent event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
@@ -132,7 +128,6 @@ public class SearchFragment extends Fragment {
         return view;
     }
 
-    /* ---------------- fetch news (limit + query) ---------------- */
     private void fetchNews(String query) {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
@@ -158,7 +153,6 @@ public class SearchFragment extends Fragment {
         }).execute();
     }
 
-    /* ---------------- hapus + refresh ---------------- */
     private void deleteNewsAndRefresh(int id) {
         new NewsFetcher.DeleteCallback() {
             @Override public void onSuccess(String res) {

@@ -63,7 +63,7 @@ public class ProfileFragment extends Fragment {
                 btnAddNews.setOnClickListener(v -> {
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
-                            .replace(R.id.fragment_container, new NewsCreateFragment()) // Pastikan kamu punya fragment ini
+                            .replace(R.id.fragment_container, new NewsCreateFragment())
                             .addToBackStack(null)
                             .commit();
                 });
@@ -88,7 +88,7 @@ public class ProfileFragment extends Fragment {
             btnRegister.setVisibility(View.VISIBLE);
             btnLogout.setVisibility(View.GONE);
             btnEdit.setVisibility(View.GONE);
-            btnAddNews.setVisibility(View.GONE); // Juga disembunyikan jika belum login
+            btnAddNews.setVisibility(View.GONE);
         }
 
         btnLogin.setOnClickListener(v -> {
@@ -105,7 +105,7 @@ public class ProfileFragment extends Fragment {
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.clear();
             editor.apply();
-            requireActivity().recreate(); // reload seluruh aktivitas
+            requireActivity().recreate();
         });
 
         return view;

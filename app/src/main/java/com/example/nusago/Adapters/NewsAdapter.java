@@ -26,8 +26,8 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.CardViewHolder
     /* ------------------------------------------------------------ */
     private final Context context;
     private final List<News> newsList;
-    private final String userRole;          // "admin" | "manager" | "user"
-    private final int userIdLogin;          // ID user yang sedang login
+    private final String userRole;
+    private final int userIdLogin;
 
     /* Listener klik card */
     public interface OnItemClickListener { void onItemClick(int newsId); }

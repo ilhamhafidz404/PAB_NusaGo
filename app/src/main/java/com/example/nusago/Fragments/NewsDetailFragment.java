@@ -66,9 +66,6 @@ public class NewsDetailFragment extends Fragment {
         return v;
     }
 
-    /* ───────────────────────────
-       AsyncTask fetch detail news
-       ─────────────────────────── */
     private void getNewsDetail(int id) {
         Log.d(TAG, "Memulai fetch detail berita…");
         new AsyncTask<Void, Void, String>() {

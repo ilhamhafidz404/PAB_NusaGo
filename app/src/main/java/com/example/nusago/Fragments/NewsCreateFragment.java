@@ -57,11 +57,9 @@ public class NewsCreateFragment extends Fragment {
             return;
         }
 
-        // Ambil user ID dari shared preferences
         SharedPreferences prefs = requireActivity().getSharedPreferences("auth", Context.MODE_PRIVATE);
         int userId = prefs.getInt("id", 0);
 
-        // Kirim ke API dengan userId
         NewsFetcher.postNews(title, desc, body, image, userId, new NewsFetcher.PostCallback() {
             @Override
             public void onSuccess(String message) {
