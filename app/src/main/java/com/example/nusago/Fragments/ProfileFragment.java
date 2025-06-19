@@ -57,8 +57,8 @@ public class ProfileFragment extends Fragment {
             btnLogout.setVisibility(View.VISIBLE);
             btnEdit.setVisibility(View.VISIBLE);
 
-            // Tampilkan tombol tambah berita jika role adalah admin
-            if (role.equalsIgnoreCase("admin")) {
+            //
+            if (role.equalsIgnoreCase("admin") || role.equalsIgnoreCase("manager")) {
                 btnAddNews.setVisibility(View.VISIBLE);
                 btnAddNews.setOnClickListener(v -> {
                     requireActivity().getSupportFragmentManager()

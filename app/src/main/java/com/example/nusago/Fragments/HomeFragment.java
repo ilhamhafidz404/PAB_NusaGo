@@ -74,10 +74,12 @@ public class HomeFragment extends Fragment {
             recyclerViewNews.setVisibility(View.VISIBLE);
         }
 
-        SharedPreferences prefs = requireActivity().getSharedPreferences("auth", Context.MODE_PRIVATE);
-        String role = prefs.getString("role", "user");
+        SharedPreferences prefs = requireActivity()
+                .getSharedPreferences("auth", Context.MODE_PRIVATE);
+        String role   = prefs.getString("role", "user");
+        int    userId = prefs.getInt("id", 0);
 
-        newsAdapter = new NewsAdapter(requireContext(), newsList, role);
+        newsAdapter = new NewsAdapter(requireContext(), newsList, role, userId);
 
         newsAdapter.setOnItemClickListener(newsId -> {
             Bundle bundle = new Bundle();

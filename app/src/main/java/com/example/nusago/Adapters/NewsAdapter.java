@@ -21,32 +21,41 @@ import java.util.List;
 
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.CardViewHolder> {
 
-    /* ────────────── field utama ────────────── */
+    /* ------------------------------------------------------------ */
+    /* Field utama                                                  */
+    /* ------------------------------------------------------------ */
     private final Context context;
     private final List<News> newsList;
-    private final String userRole;               // <-- admin / user
-    private OnItemClickListener clickListener;
-    private AdminActionListener adminListener;
+    private final String userRole;          // "admin" | "manager" | "user"
+    private final int userIdLogin;          // ID user yang sedang login
 
-    /* ────────────── listener umum ───────────── */
+    /* Listener klik card */
     public interface OnItemClickListener { void onItemClick(int newsId); }
+    private OnItemClickListener clickListener;
     public void setOnItemClickListener(OnItemClickListener l) { this.clickListener = l; }
 
-    /* ────────────── listener admin ──────────── */
+    /* Listener aksi admin */
     public interface AdminActionListener {
         void onEdit(int newsId);
         void onDelete(int newsId);
     }
+    private AdminActionListener adminListener;
     public void setAdminActionListener(AdminActionListener l) { this.adminListener = l; }
 
-    /* ────────────── konstruktor ─────────────── */
-    public NewsAdapter(Context context, List<News> newsList, String userRole) {
-        this.context   = context;
-        this.newsList  = newsList;
-        this.userRole  = userRole;  // simpan role
+    /* ------------------------------------------------------------ */
+    /* Konstruktor                                                  */
+    /* ------------------------------------------------------------ */
+    public NewsAdapter(Context context, List<News> newsList,
+                       String role, int userIdLogin) {
+        this.context      = context;
+        this.newsList     = newsList;
+        this.userRole     = role;
+        this.userIdLogin  = userIdLogin;
     }
 
-    /* ────────────── adapter std. ────────────── */
+    /* ------------------------------------------------------------ */
+    /* ViewHolder                                                   */
+    /* ------------------------------------------------------------ */
     @NonNull @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(context).inflate(R.layout.card_news, parent, false);
@@ -57,31 +66,38 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.CardViewHolder
     public void onBindViewHolder(@NonNull CardViewHolder h, int pos) {
         News item = newsList.get(pos);
 
+        /* --- isi konten text & image --- */
         h.title.setText(item.getTitle());
         h.description.setText(item.getDescription());
-        h.date.setText(item.getCreatedAt());
+        h.date.setText(item.getCreatedAt());   // default tampil
 
         Glide.with(context)
                 .load(item.getImage())
                 .transform(new RoundedCorners(30))
                 .into(h.imageView);
 
-        /* tampilkan / sembunyikan tombol admin */
+        /* -------------------------------------------------------- */
+        /* Tampilkan tombol Edit/Hapus berdasarkan role & kepemilikan */
+        /* -------------------------------------------------------- */
+        boolean showAdminButtons = false;
+
         if ("admin".equalsIgnoreCase(userRole)) {
-            h.date.setVisibility(View.GONE);
-            h.adminButtons.setVisibility(View.VISIBLE);
-        } else {
-            h.date.setText(item.getCreatedAt());
-            h.date.setVisibility(View.VISIBLE);
-            h.adminButtons.setVisibility(View.GONE);
+            // Admin: bisa edit & delete semua
+            showAdminButtons = true;
+            h.date.setVisibility(View.GONE);       // contoh: sembunyikan tanggal utk admin
+        } else if ("manager".equalsIgnoreCase(userRole)
+                && item.getUserId() == userIdLogin) {
+            // Manager: hanya untuk news miliknya
+            showAdminButtons = true;
+            h.date.setVisibility(View.VISIBLE);    // tanggal tetap tampil
         }
 
-        /* tombol edit */
+        h.adminButtons.setVisibility(showAdminButtons ? View.VISIBLE : View.GONE);
+
+        /* --- aksi tombol --- */
         h.btnEdit.setOnClickListener(v -> {
             if (adminListener != null) adminListener.onEdit(item.getId());
         });
-
-        /* tombol delete */
         h.btnDelete.setOnClickListener(v -> {
             if (adminListener != null) adminListener.onDelete(item.getId());
         });
@@ -89,25 +105,27 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.CardViewHolder
 
     @Override public int getItemCount() { return newsList.size(); }
 
-    /* ────────────── ViewHolder ──────────────── */
+    /* ------------------------------------------------------------ */
+    /* Inner ViewHolder                                             */
+    /* ------------------------------------------------------------ */
     class CardViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
-        TextView title, description, date;
+        TextView  title, description, date;
         LinearLayout adminButtons;
         Button btnEdit, btnDelete;
 
         CardViewHolder(@NonNull View itemView) {
             super(itemView);
-            imageView     = itemView.findViewById(R.id.image_card);
-            title         = itemView.findViewById(R.id.title_card);
-            description   = itemView.findViewById(R.id.desc_card);
-            date          = itemView.findViewById(R.id.date_card);
+            imageView    = itemView.findViewById(R.id.image_card);
+            title        = itemView.findViewById(R.id.title_card);
+            description  = itemView.findViewById(R.id.desc_card);
+            date         = itemView.findViewById(R.id.date_card);
 
-            adminButtons  = itemView.findViewById(R.id.admin_buttons);
-            btnEdit       = itemView.findViewById(R.id.btn_edit);
-            btnDelete     = itemView.findViewById(R.id.btn_delete);
+            adminButtons = itemView.findViewById(R.id.admin_buttons);
+            btnEdit      = itemView.findViewById(R.id.btn_edit);
+            btnDelete    = itemView.findViewById(R.id.btn_delete);
 
-            /* klik item normal */
+            /* Klik keseluruhan kartu */
             itemView.setOnClickListener(v -> {
                 int p = getAdapterPosition();
                 if (clickListener != null && p != RecyclerView.NO_POSITION) {
@@ -117,11 +135,13 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.CardViewHolder
         }
     }
 
+    /* ------------------------------------------------------------ */
+    /* Helper: remove item                                          */
+    /* ------------------------------------------------------------ */
     public void removeAt(int position) {
         newsList.remove(position);
         notifyItemRemoved(position);
     }
-
     public void removeById(int id) {
         for (int i = 0; i < newsList.size(); i++) {
             if (newsList.get(i).getId() == id) {
@@ -131,5 +151,4 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.CardViewHolder
             }
         }
     }
-
 }
