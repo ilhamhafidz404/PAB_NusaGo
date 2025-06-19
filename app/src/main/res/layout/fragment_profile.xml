@@ -65,6 +65,31 @@
                 android:textSize="16sp"
                 android:layout_marginBottom="16dp" />
 
+            <LinearLayout
+                android:id="@+id/layout_admin_tools"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="24dp">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#CCCCCC"
+                    android:layout_marginVertical="10dp" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btn_add_news"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tambah Berita"
+                    android:backgroundTint="@null"
+                    android:background="@drawable/comp_button_secondary"
+                    android:textColor="#FFFFFF"
+                    android:padding="12dp"
+                    android:layout_marginBottom="8dp" />
+            </LinearLayout>
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
@@ -106,7 +131,6 @@
                 android:background="@drawable/comp_button_primary"
                 android:textColor="#FFFFFF"
                 android:padding="12dp" />
-
         </LinearLayout>
     </ScrollView>
 

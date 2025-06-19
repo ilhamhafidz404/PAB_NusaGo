@@ -16,6 +16,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.nusago.Fetcher.AuthFetcher;
+import com.example.nusago.MainActivity;
 import com.example.nusago.R;
 
 import org.json.JSONException;
@@ -67,17 +68,17 @@ public class LoginActivity extends AppCompatActivity {
                     String role         = data.getString("role");
                     String verified_at  = data.getString("verified_at");
 
-                    Class<?> nextActivity;
+//                    Class<?> nextActivity;
+//
+//                    if ("admin".equalsIgnoreCase(role)) {
+//                        nextActivity = com.example.nusago.Activities.Admin.MainActivity.class;
+//                    } else if ("manager".equalsIgnoreCase(role)) {
+//                        nextActivity = com.example.nusago.Activities.Manager.MainActivity.class;
+//                    } else {
+//                        nextActivity = com.example.nusago.MainActivity.class;
+//                    }
 
-                    if ("admin".equalsIgnoreCase(role)) {
-                        nextActivity = com.example.nusago.Activities.Admin.MainActivity.class;
-                    } else if ("manager".equalsIgnoreCase(role)) {
-                        nextActivity = com.example.nusago.Activities.Manager.MainActivity.class;
-                    } else {
-                        nextActivity = com.example.nusago.MainActivity.class;
-                    }
-
-//                    Class<?> nextActivity = MainActivity.class;
+                    Class<?> nextActivity = MainActivity.class;
 
                     // Create Session
                     sharedPreferences = getSharedPreferences("auth", MODE_PRIVATE);

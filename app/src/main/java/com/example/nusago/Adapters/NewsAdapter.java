@@ -4,7 +4,9 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -19,80 +21,115 @@ import java.util.List;
 
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.CardViewHolder> {
 
-    /* ------------------------------------------------------------------ */
-    /* Konstruktor & field                                                */
-    /* ------------------------------------------------------------------ */
+    /* ────────────── field utama ────────────── */
     private final Context context;
-    private final List<News> cardList;           // daftar berita
-    private OnItemClickListener listener;        // listener klik
+    private final List<News> newsList;
+    private final String userRole;               // <-- admin / user
+    private OnItemClickListener clickListener;
+    private AdminActionListener adminListener;
 
-    public interface OnItemClickListener {
-        void onItemClick(int newsId);            // kirim ID
+    /* ────────────── listener umum ───────────── */
+    public interface OnItemClickListener { void onItemClick(int newsId); }
+    public void setOnItemClickListener(OnItemClickListener l) { this.clickListener = l; }
+
+    /* ────────────── listener admin ──────────── */
+    public interface AdminActionListener {
+        void onEdit(int newsId);
+        void onDelete(int newsId);
     }
-    public void setOnItemClickListener(OnItemClickListener l) {
-        this.listener = l;
+    public void setAdminActionListener(AdminActionListener l) { this.adminListener = l; }
+
+    /* ────────────── konstruktor ─────────────── */
+    public NewsAdapter(Context context, List<News> newsList, String userRole) {
+        this.context   = context;
+        this.newsList  = newsList;
+        this.userRole  = userRole;  // simpan role
     }
 
-    public NewsAdapter(Context context, List<News> cardList) {
-        this.context  = context;
-        this.cardList = cardList;
-    }
-
-    /* ------------------------------------------------------------------ */
-    /* ViewHolder                                                         */
-    /* ------------------------------------------------------------------ */
-    @NonNull
-    @Override
+    /* ────────────── adapter std. ────────────── */
+    @NonNull @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.card_news, parent, false);
-        return new CardViewHolder(view);
+        View v = LayoutInflater.from(context).inflate(R.layout.card_news, parent, false);
+        return new CardViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
-        News item = cardList.get(position);
+    public void onBindViewHolder(@NonNull CardViewHolder h, int pos) {
+        News item = newsList.get(pos);
 
-        // judul, deskripsi, tanggal
-        holder.title.setText(item.getTitle());
-        holder.description.setText(item.getDescription());
-        holder.date.setText(item.getCreatedAt());
+        h.title.setText(item.getTitle());
+        h.description.setText(item.getDescription());
+        h.date.setText(item.getCreatedAt());
 
-        // gambar (Glide)
         Glide.with(context)
-                .load(item.getImage())                  // URL atau drawable
+                .load(item.getImage())
                 .transform(new RoundedCorners(30))
-                .into(holder.imageView);
+                .into(h.imageView);
+
+        /* tampilkan / sembunyikan tombol admin */
+        if ("admin".equalsIgnoreCase(userRole)) {
+            h.date.setVisibility(View.GONE);
+            h.adminButtons.setVisibility(View.VISIBLE);
+        } else {
+            h.date.setText(item.getCreatedAt());
+            h.date.setVisibility(View.VISIBLE);
+            h.adminButtons.setVisibility(View.GONE);
+        }
+
+        /* tombol edit */
+        h.btnEdit.setOnClickListener(v -> {
+            if (adminListener != null) adminListener.onEdit(item.getId());
+        });
+
+        /* tombol delete */
+        h.btnDelete.setOnClickListener(v -> {
+            if (adminListener != null) adminListener.onDelete(item.getId());
+        });
     }
 
-    @Override
-    public int getItemCount() {
-        return cardList.size();
-    }
+    @Override public int getItemCount() { return newsList.size(); }
 
-    /* ------------------------------------------------------------------ */
-    /* Inner class ViewHolder                                             */
-    /* ------------------------------------------------------------------ */
-    public class CardViewHolder extends RecyclerView.ViewHolder {
+    /* ────────────── ViewHolder ──────────────── */
+    class CardViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
-        TextView  title, description, date, location;   // location opsional
+        TextView title, description, date;
+        LinearLayout adminButtons;
+        Button btnEdit, btnDelete;
 
-        public CardViewHolder(@NonNull View itemView) {
+        CardViewHolder(@NonNull View itemView) {
             super(itemView);
-            imageView    = itemView.findViewById(R.id.image_card);
-            title        = itemView.findViewById(R.id.title_card);
-            description  = itemView.findViewById(R.id.desc_card);
-            date         = itemView.findViewById(R.id.date_card);
-            location     = itemView.findViewById(R.id.location_card);
+            imageView     = itemView.findViewById(R.id.image_card);
+            title         = itemView.findViewById(R.id.title_card);
+            description   = itemView.findViewById(R.id.desc_card);
+            date          = itemView.findViewById(R.id.date_card);
 
-            /*  ───── Klik item ───── */
+            adminButtons  = itemView.findViewById(R.id.admin_buttons);
+            btnEdit       = itemView.findViewById(R.id.btn_edit);
+            btnDelete     = itemView.findViewById(R.id.btn_delete);
+
+            /* klik item normal */
             itemView.setOnClickListener(v -> {
-                int pos = getAdapterPosition();
-                if (listener != null
-                        && pos != RecyclerView.NO_POSITION) {
-                    int newsId = cardList.get(pos).getId();   // ← kirim ID
-                    listener.onItemClick(newsId);
+                int p = getAdapterPosition();
+                if (clickListener != null && p != RecyclerView.NO_POSITION) {
+                    clickListener.onItemClick(newsList.get(p).getId());
                 }
             });
         }
     }
+
+    public void removeAt(int position) {
+        newsList.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    public void removeById(int id) {
+        for (int i = 0; i < newsList.size(); i++) {
+            if (newsList.get(i).getId() == id) {
+                newsList.remove(i);
+                notifyItemRemoved(i);
+                return;
+            }
+        }
+    }
+
 }
