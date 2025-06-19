@@ -1,6 +1,4 @@
-package com.example.nusago.Fecther;
-
-import android.util.Log;
+package com.example.nusago.Fetcher;
 
 import java.io.*;
 import java.net.HttpURLConnection;

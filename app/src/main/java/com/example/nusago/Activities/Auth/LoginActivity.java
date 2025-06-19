@@ -15,8 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.nusago.Fecther.AuthFetcher;
-import com.example.nusago.MainActivity;
+import com.example.nusago.Fetcher.AuthFetcher;
 import com.example.nusago.R;
 
 import org.json.JSONException;

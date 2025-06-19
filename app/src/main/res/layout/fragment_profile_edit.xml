@@ -91,13 +91,21 @@
                     android:text="Password Baru"
                     android:textSize="14sp"
                     android:layout_marginTop="16dp"
-                    android:layout_marginBottom="4dp" />
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:text="Kosongkan jika tidak ingin mengubah password"
+                    android:textSize="10sp"
+                    android:textStyle="italic" />
 
                 <EditText
                     android:id="@+id/et_password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Kosongkan jika tidak ingin ubah password"
+                    android:hint="Password"
                     android:inputType="textPassword"
                     android:padding="12dp"
                     android:background="@drawable/comp_edittext" />
@@ -130,7 +138,7 @@
                     android:backgroundTint="@null"
                     android:background="@drawable/comp_button_primary"
                     android:textColor="#FFFFFF"
-                    android:padding="12dp" />
+                    android:padding="12dp"/>
 
             </LinearLayout>
         </LinearLayout>
