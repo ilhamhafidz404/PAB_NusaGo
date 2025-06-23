@@ -22,7 +22,7 @@ public class ProfileFragment extends Fragment {
     private SharedPreferences sharedPreferences;
 
     private TextView tvName, tvEmail, tvRole;
-    private Button btnLogin, btnRegister, btnLogout, btnAddNews;
+    private Button btnLogin, btnRegister, btnLogout, btnAddNews, btnManageUser;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -37,7 +37,9 @@ public class ProfileFragment extends Fragment {
         btnLogin = view.findViewById(R.id.btn_login);
         btnRegister = view.findViewById(R.id.btn_register);
         btnLogout = view.findViewById(R.id.btn_logout);
+        //
         btnAddNews = view.findViewById(R.id.btn_add_news);
+        btnManageUser = view.findViewById(R.id.btn_manage_user);
 
         FloatingActionButton btnEdit = view.findViewById(R.id.fab_edit_account);
 
@@ -67,6 +69,17 @@ public class ProfileFragment extends Fragment {
                             .addToBackStack(null)
                             .commit();
                 });
+
+                if(role.equals("admin")){
+                    btnManageUser.setVisibility(View.VISIBLE);
+                    btnManageUser.setOnClickListener(v -> {
+                        requireActivity().getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_container, new UserListFragment())
+                                .addToBackStack(null)
+                                .commit();
+                    });
+                }
             } else {
                 btnAddNews.setVisibility(View.GONE);
             }

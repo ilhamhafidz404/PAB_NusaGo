@@ -2,10 +2,8 @@ package com.example.nusago.Fragments;
 
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.example.nusago.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import com.example.nusago.Fetcher.ProfileFetcher;
+import com.example.nusago.Fetcher.UserFetcher;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -90,7 +88,7 @@ public class ProfileEditFragment extends Fragment {
         progressDialog.setCancelable(false);
         progressDialog.show();
 
-        ProfileFetcher.putProfile(userId, name, password, new ProfileFetcher.ApiCallback() {
+        UserFetcher.putUser(userId, name, password, new UserFetcher.ApiCallback() {
             @Override
             public void onSuccess(String response) {
                 progressDialog.dismiss();

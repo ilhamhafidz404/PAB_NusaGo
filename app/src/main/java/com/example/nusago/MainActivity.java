@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private void openHomeFragment() {
         HomeFragment fragment = new HomeFragment();
         Bundle bundle = new Bundle();
-        bundle.putSerializable("news_list", newsList);      // News harus Serializable
+        bundle.putSerializable("news_list", newsList);
         fragment.setArguments(bundle);
         loadFragment(fragment);
     }
