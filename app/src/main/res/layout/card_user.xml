@@ -23,6 +23,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <TextView
+        android:id="@+id/tv_user_status"
+        android:text="Aktif"
+        android:textSize="14sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -36,13 +43,6 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="horizontal">
-
-            <TextView
-                android:text="Role: "
-                android:textSize="14sp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
             <TextView
                 android:id="@+id/tv_user_role"
                 android:text="Admin"
@@ -59,7 +59,7 @@
             android:minWidth="0dp"
             android:minHeight="0dp"
             android:backgroundTint="@android:color/holo_red_dark"
-            android:text="Hapus"
+            android:text="Aktif/Nonaktif"
             android:textColor="#FFFFFF" />
 
     </LinearLayout>

@@ -1,12 +1,8 @@
 package com.example.nusago.Adapters;
 
 import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
-
+import android.view.*;
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,13 +13,13 @@ import java.util.List;
 
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
 
-    private final Context context;
-    private final List<User> userList;
-    private final OnUserActionListener listener;
-
     public interface OnUserActionListener {
-        void onDelete(User user);
+        void onDeleteUser(User user);
     }
+
+    private Context context;
+    private List<User> userList;
+    private OnUserActionListener listener;
 
     public UserAdapter(Context context, List<User> userList, OnUserActionListener listener) {
         this.context = context;
@@ -41,14 +37,19 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     @Override
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = userList.get(position);
-        holder.tvName.setText(user.getName());
-        holder.tvEmail.setText(user.getEmail());
-        holder.tvRole.setText(user.getRole());
+
+        String userStatus = "Aktif";
+        if (user.getDeletedAt() != null && !user.getDeletedAt().isEmpty() && !user.getDeletedAt().equals("null")) {
+            userStatus = "Nonaktif - " + user.getFormattedDeletedAt();
+        }
+
+        holder.name.setText(user.getName());
+        holder.email.setText(user.getEmail());
+        holder.role.setText("Role: " + user.getRole());
+        holder.status.setText("Status: " + userStatus);
 
         holder.btnDelete.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onDelete(user);
-            }
+            if (listener != null) listener.onDeleteUser(user);
         });
     }
 
@@ -58,14 +59,15 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     }
 
     public static class UserViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvEmail, tvRole;
+        TextView name, email, role, status;
         Button btnDelete;
 
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvName = itemView.findViewById(R.id.tv_user_name);
-            tvEmail = itemView.findViewById(R.id.tv_user_email);
-            tvRole = itemView.findViewById(R.id.tv_user_role);
+            name = itemView.findViewById(R.id.tv_user_name);
+            email = itemView.findViewById(R.id.tv_user_email);
+            role = itemView.findViewById(R.id.tv_user_role);
+            status = itemView.findViewById(R.id.tv_user_status);
             btnDelete = itemView.findViewById(R.id.btn_delete_user);
         }
     }

@@ -1,27 +1,25 @@
 package com.example.nusago.Fragments;
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.util.Log;
+import android.view.*;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.*;
 
 import com.example.nusago.Adapters.UserAdapter;
-import com.example.nusago.Fetcher.UserFetcher;
 import com.example.nusago.Models.User;
 import com.example.nusago.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public class UserListFragment extends Fragment {
 
@@ -30,7 +28,7 @@ public class UserListFragment extends Fragment {
     List<User> userList = new ArrayList<>();
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_user_list, container, false);
 
@@ -46,14 +44,7 @@ public class UserListFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewUsers);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new UserAdapter(getContext(), userList, new UserAdapter.OnUserActionListener() {
-            @Override
-            public void onDelete(User user) {
-                // TODO: Implement API delete user
-                Toast.makeText(getContext(), "Hapus user: " + user.getName(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
+        adapter = new UserAdapter(getContext(), userList, user -> deleteUser(user));
         recyclerView.setAdapter(adapter);
 
         fetchUsers();
@@ -62,45 +53,89 @@ public class UserListFragment extends Fragment {
     }
 
     private void fetchUsers() {
-        UserFetcher.getUser(new UserFetcher.ApiCallback() {
-            @Override
-            public void onSuccess(String response) {
-                try {
-                    userList.clear();
+        new Thread(() -> {
+            try {
+                URL url = new URL("https://nusago.alope.id/users");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
 
-                    JSONObject root = new JSONObject(response);
-                    if (!"success".equalsIgnoreCase(root.optString("status"))) {
-                        throw new JSONException("status not success");
-                    }
+                int responseCode = conn.getResponseCode();
+                InputStream is = responseCode >= 200 && responseCode < 300
+                        ? conn.getInputStream()
+                        : conn.getErrorStream();
 
-                    JSONObject dataObj = root.getJSONObject("data");   // lapisan pertama
-                    JSONArray arr      = dataObj.getJSONArray("data"); // array user sebenarnya
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                StringBuilder result = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) result.append(line);
+                reader.close();
 
-                    userList.clear();
-                    for (int i = 0; i < arr.length(); i++) {
-                        JSONObject obj = arr.getJSONObject(i);
+                JSONObject json = new JSONObject(result.toString());
+                JSONArray users = json.getJSONObject("data").getJSONArray("data");
 
-                        int id       = obj.getInt("id");
-                        String name  = obj.getString("name");
-                        String email = obj.getString("email");
-                        String role  = obj.getString("role");
+                userList.clear();
+                for (int i = 0; i < users.length(); i++) {
+                    JSONObject u = users.getJSONObject(i);
+                    int id = u.getInt("id");
+                    String name = u.getString("name");
+                    String email = u.getString("email");
+                    String role = u.getString("role");
+                    String deleted_at = u.getString("deleted_at");
 
-                        userList.add(new User(id, name, email, role));
-                    }
-                    requireActivity().runOnUiThread(() -> adapter.notifyDataSetChanged());
-                } catch (Exception e) {
-                    requireActivity().runOnUiThread(() ->
-                            Toast.makeText(getContext(), "Format data error", Toast.LENGTH_SHORT).show()
-                    );
+                    userList.add(new User(id, name, email, role, deleted_at));
                 }
-            }
 
-            @Override
-            public void onError(Exception e) {
+                requireActivity().runOnUiThread(() -> adapter.notifyDataSetChanged());
+
+            } catch (Exception e) {
                 requireActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), "Gagal mengambil data user", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(getContext(), "Gagal mengambil data", Toast.LENGTH_SHORT).show()
                 );
             }
-        });
+        }).start();
+    }
+
+    private void deleteUser(User user) {
+        new Thread(() -> {
+            try {
+                String urlString = "https://nusago.alope.id/delete-user?id=" + user.getId();
+                Log.d("DELETE_USER", "URL: " + urlString);
+
+                URL url = new URL(urlString);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+
+                int responseCode = conn.getResponseCode();
+                Log.d("DELETE_USER", "Response Code: " + responseCode);
+
+                if (responseCode == 200) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+                    Log.d("DELETE_USER", "Response Body: " + response.toString());
+
+                    requireActivity().runOnUiThread(() -> {
+                        fetchUsers();
+                        Toast.makeText(getContext(), "User Diubah Statusnya", Toast.LENGTH_SHORT).show();
+                    });
+                } else {
+                    Log.e("DELETE_USER", "Gagal hapus user. Kode: " + responseCode);
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), "Gagal hapus user", Toast.LENGTH_SHORT).show()
+                    );
+                }
+
+                conn.disconnect();
+            } catch (Exception e) {
+                Log.e("DELETE_USER", "Exception saat hapus user", e);
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "Terjadi kesalahan", Toast.LENGTH_SHORT).show()
+                );
+            }
+        }).start();
     }
 }
