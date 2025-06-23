@@ -1,10 +1,13 @@
 package com.example.nusago.Fragments;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
+
 import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
 
@@ -25,7 +28,7 @@ public class NewsDetailFragment extends Fragment {
     private int newsId;
     private ImageView imgHeader;
     private TextView  tvTitle, tvDate, tvBody;
-    private Button    btnOrder;          // ← tombol Pesan Tiket
+    private Button    btnOrder;
 
     @Nullable
     @Override
@@ -39,14 +42,13 @@ public class NewsDetailFragment extends Fragment {
         tvTitle   = v.findViewById(R.id.tv_title);
         tvDate    = v.findViewById(R.id.tv_date);
         tvBody    = v.findViewById(R.id.tv_body);
-        btnOrder  = v.findViewById(R.id.btn_order_ticket);   // inisialisasi tombol
-        btnOrder.setVisibility(View.GONE);                   // sembunyikan default
+        btnOrder  = v.findViewById(R.id.btn_order_ticket);
+        btnOrder.setVisibility(View.GONE);
 
         FloatingActionButton fabBack = v.findViewById(R.id.fab_back);
         fabBack.setOnClickListener(view ->
                 requireActivity().getSupportFragmentManager().popBackStack());
 
-        // Ambil ID dari arguments
         if (getArguments() != null) {
             newsId = getArguments().getInt("news_id", 0);
         }
@@ -62,7 +64,6 @@ public class NewsDetailFragment extends Fragment {
         return v;
     }
 
-    /* ─────────────────── Fetch detail dari API ─────────────────── */
     private void getNewsDetail(int id) {
         Log.d(TAG, "Memulai fetch detail berita…");
         new AsyncTask<Void, Void, String>() {
@@ -107,7 +108,6 @@ public class NewsDetailFragment extends Fragment {
         }.execute();
     }
 
-    /* ─────────────────── Parse JSON & Bind view ─────────────────── */
     private void parseAndBind(String jsonStr) {
         try {
             JSONObject root = new JSONObject(jsonStr);
@@ -121,7 +121,7 @@ public class NewsDetailFragment extends Fragment {
             String image = data.optString("image", "");
             String body  = data.getString("body");
             String date  = data.getString("created_at");
-            int    withEvent = data.optInt("with_event", 0);  // ← ambil flag
+            int    withEvent = data.optInt("with_event", 0);
 
             tvTitle.setText(title);
             tvDate.setText(date);
@@ -130,19 +130,66 @@ public class NewsDetailFragment extends Fragment {
             if (!image.isEmpty())
                 Glide.with(requireContext()).load(image).into(imgHeader);
 
-            /* ----- Tampilkan tombol Pesan Tiket jika with_event == 1 ----- */
             if (withEvent == 1) {
                 btnOrder.setVisibility(View.VISIBLE);
-                btnOrder.setOnClickListener(v -> {
-                    Toast.makeText(getContext(),
-                            "Arahkan ke halaman pemesanan tiket", Toast.LENGTH_SHORT).show();
-                    // startActivity(new Intent(getContext(), TicketOrderActivity.class));
-                });
+                btnOrder.setOnClickListener(v -> handleOrderTicket());
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(getContext(), "Format JSON salah", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void handleOrderTicket() {
+        SharedPreferences prefs = requireActivity()
+                .getSharedPreferences("auth", Context.MODE_PRIVATE);
+        int userId = prefs.getInt("id", 0);
+
+        if (userId == 0) {
+            Toast.makeText(getContext(), "User belum login", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String invoice = "INV" + System.currentTimeMillis();
+
+        new AsyncTask<Void, Void, Boolean>() {
+            @Override
+            protected Boolean doInBackground(Void... voids) {
+                try {
+                    URL url = new URL("https://nusago.alope.id/store-transaction");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setDoOutput(true);
+                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+                    String postData = "invoice=" + invoice + "&user_id=" + userId;
+
+                    OutputStream os = conn.getOutputStream();
+                    os.write(postData.getBytes());
+                    os.flush();
+                    os.close();
+
+                    int code = conn.getResponseCode();
+                    Log.d(TAG, "POST transaksi code: " + code);
+
+                    return (code == 200 || code == 201);
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Gagal membuat transaksi", e);
+                    return false;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Boolean success) {
+                if (success) {
+                    Toast.makeText(getContext(), "Tiket berhasil dipesan", Toast.LENGTH_SHORT).show();
+                    // Bisa redirect ke daftar transaksi
+                } else {
+                    Toast.makeText(getContext(), "Gagal memesan tiket", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }.execute();
     }
 }
