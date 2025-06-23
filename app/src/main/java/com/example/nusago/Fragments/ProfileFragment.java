@@ -22,7 +22,7 @@ public class ProfileFragment extends Fragment {
     private SharedPreferences sharedPreferences;
 
     private TextView tvName, tvEmail, tvRole;
-    private Button btnLogin, btnRegister, btnLogout, btnAddNews, btnManageUser;
+    private Button btnLogin, btnRegister, btnLogout, btnAddNews, btnManageUser, btnManageTransaction;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -40,6 +40,7 @@ public class ProfileFragment extends Fragment {
         //
         btnAddNews = view.findViewById(R.id.btn_add_news);
         btnManageUser = view.findViewById(R.id.btn_manage_user);
+        btnManageTransaction = view.findViewById(R.id.btn_manage_transaction);
 
         FloatingActionButton btnEdit = view.findViewById(R.id.fab_edit_account);
 
@@ -76,6 +77,15 @@ public class ProfileFragment extends Fragment {
                         requireActivity().getSupportFragmentManager()
                                 .beginTransaction()
                                 .replace(R.id.fragment_container, new UserListFragment())
+                                .addToBackStack(null)
+                                .commit();
+                    });
+
+                    btnManageTransaction.setVisibility(View.VISIBLE);
+                    btnManageTransaction.setOnClickListener(v -> {
+                        requireActivity().getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_container, new TransactionListFragment())
                                 .addToBackStack(null)
                                 .commit();
                     });
