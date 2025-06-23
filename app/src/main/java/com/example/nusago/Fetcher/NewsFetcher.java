@@ -167,8 +167,7 @@ public class NewsFetcher extends AsyncTask<Void, Void, ArrayList<News>> {
         void onError(Exception e);
     }
 
-    public static void postNews(String title, String desc, String body,
-                                String imageUrl, int userId, PostCallback cb) {
+    public static void postNews(String title, String description, String body, String image, int userId, int withEvent, PostCallback cb) {
 
         new Thread(() -> {
             final String TAG = "POST_NEWS";
@@ -184,11 +183,12 @@ public class NewsFetcher extends AsyncTask<Void, Void, ArrayList<News>> {
                 conn.setDoOutput(true);
                 conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-                String data = "title=" + URLEncoder.encode(title, "UTF-8")
-                        + "&description=" + URLEncoder.encode(desc, "UTF-8")
-                        + "&body=" + URLEncoder.encode(body, "UTF-8")
-                        + "&image=" + URLEncoder.encode(imageUrl, "UTF-8")
-                        + "&user_id=" + URLEncoder.encode(String.valueOf(userId), "UTF-8");
+                String data = "title=" + URLEncoder.encode(title, "UTF-8") +
+                        "&description=" + URLEncoder.encode(description, "UTF-8") +
+                        "&body=" + URLEncoder.encode(body, "UTF-8") +
+                        "&image=" + URLEncoder.encode(image, "UTF-8") +
+                        "&user_id=" + userId +
+                        "&with_event=" + withEvent;
 
                 Log.d(TAG, "POST Data     : " + data);
 

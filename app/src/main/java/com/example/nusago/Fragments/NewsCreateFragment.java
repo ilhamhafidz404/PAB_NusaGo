@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -22,6 +23,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 public class NewsCreateFragment extends Fragment {
 
     private EditText etTitle, etDescription, etBody, etImageUrl;
+
+    private CheckBox cbWithEvent;
     private Button btnSubmit;
 
     @Nullable
@@ -37,6 +40,8 @@ public class NewsCreateFragment extends Fragment {
         etBody        = view.findViewById(R.id.et_body);
         etImageUrl    = view.findViewById(R.id.et_image_url);
         btnSubmit     = view.findViewById(R.id.btn_submit);
+        cbWithEvent = view.findViewById(R.id.cb_with_event);
+
 
         btnSubmit.setOnClickListener(v -> submitNews());
 
@@ -60,7 +65,10 @@ public class NewsCreateFragment extends Fragment {
         SharedPreferences prefs = requireActivity().getSharedPreferences("auth", Context.MODE_PRIVATE);
         int userId = prefs.getInt("id", 0);
 
-        NewsFetcher.postNews(title, desc, body, image, userId, new NewsFetcher.PostCallback() {
+        // Handle checkbox "With Event"
+        int withEvent = cbWithEvent.isChecked() ? 1 : 0;
+
+        NewsFetcher.postNews(title, desc, body, image, userId, withEvent, new NewsFetcher.PostCallback() {
             @Override
             public void onSuccess(String message) {
                 requireActivity().runOnUiThread(() -> {
@@ -77,4 +85,5 @@ public class NewsCreateFragment extends Fragment {
             }
         });
     }
+
 }

@@ -3,26 +3,18 @@ package com.example.nusago.Fragments;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import android.view.*;
+import android.widget.*;
+import androidx.annotation.*;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.nusago.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -32,7 +24,8 @@ public class NewsDetailFragment extends Fragment {
 
     private int newsId;
     private ImageView imgHeader;
-    private TextView tvTitle, tvDate, tvBody;
+    private TextView  tvTitle, tvDate, tvBody;
+    private Button    btnOrder;          // ← tombol Pesan Tiket
 
     @Nullable
     @Override
@@ -46,6 +39,8 @@ public class NewsDetailFragment extends Fragment {
         tvTitle   = v.findViewById(R.id.tv_title);
         tvDate    = v.findViewById(R.id.tv_date);
         tvBody    = v.findViewById(R.id.tv_body);
+        btnOrder  = v.findViewById(R.id.btn_order_ticket);   // inisialisasi tombol
+        btnOrder.setVisibility(View.GONE);                   // sembunyikan default
 
         FloatingActionButton fabBack = v.findViewById(R.id.fab_back);
         fabBack.setOnClickListener(view ->
@@ -61,35 +56,35 @@ public class NewsDetailFragment extends Fragment {
             getNewsDetail(newsId);
         } else {
             Log.e(TAG, "ID berita tidak valid");
+            Toast.makeText(getContext(), "ID berita tidak valid", Toast.LENGTH_SHORT).show();
         }
 
         return v;
     }
 
+    /* ─────────────────── Fetch detail dari API ─────────────────── */
     private void getNewsDetail(int id) {
         Log.d(TAG, "Memulai fetch detail berita…");
         new AsyncTask<Void, Void, String>() {
-
             @Override
             protected String doInBackground(Void... voids) {
                 HttpURLConnection conn = null;
                 try {
                     URL url = new URL("https://nusago.alope.id/show-news?id=" + id);
-                    Log.d(TAG, "Request URL: " + url);
                     conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
 
                     int code = conn.getResponseCode();
-                    Log.d(TAG, "HTTP Response Code: " + code);
+                    Log.d(TAG, "HTTP Code: " + code);
 
-                    BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(conn.getInputStream()));
+                    InputStream is = (code >= 200 && code < 300)
+                            ? conn.getInputStream() : conn.getErrorStream();
+
+                    BufferedReader br = new BufferedReader(new InputStreamReader(is));
                     StringBuilder sb = new StringBuilder();
                     String line;
-                    while ((line = reader.readLine()) != null) sb.append(line);
-                    reader.close();
-
-                    Log.d(TAG, "Response raw: " + sb);
+                    while ((line = br.readLine()) != null) sb.append(line);
+                    br.close();
                     return sb.toString();
 
                 } catch (Exception e) {
@@ -107,33 +102,47 @@ public class NewsDetailFragment extends Fragment {
                             "Gagal mengambil detail berita", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
-                try {
-                    JSONObject json = new JSONObject(result);
-                    String status = json.getString("status");
-
-                    if (status.equals("success")) {
-                        JSONObject data = json.getJSONObject("data");
-
-                        String title = data.getString("title");
-                        String image = data.getString("image");
-                        String description = data.getString("description");
-                        String body = data.getString("body");
-                        String date = data.getString("created_at");
-
-                        // Atur data ke view
-                        tvTitle.setText(title);
-                        tvDate.setText(date);
-                        tvBody.setText(body);
-                        Glide.with(requireContext()).load(image).into(imgHeader);
-                    } else {
-                        Toast.makeText(getContext(), "Gagal memuat detail berita", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getContext(), "Format JSON salah", Toast.LENGTH_SHORT).show();
-                }
+                parseAndBind(result);
             }
         }.execute();
+    }
+
+    /* ─────────────────── Parse JSON & Bind view ─────────────────── */
+    private void parseAndBind(String jsonStr) {
+        try {
+            JSONObject root = new JSONObject(jsonStr);
+            if (!"success".equalsIgnoreCase(root.optString("status"))) {
+                Toast.makeText(getContext(), "Gagal memuat detail berita", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            JSONObject data = root.getJSONObject("data");
+
+            String title = data.getString("title");
+            String image = data.optString("image", "");
+            String body  = data.getString("body");
+            String date  = data.getString("created_at");
+            int    withEvent = data.optInt("with_event", 0);  // ← ambil flag
+
+            tvTitle.setText(title);
+            tvDate.setText(date);
+            tvBody.setText(body);
+
+            if (!image.isEmpty())
+                Glide.with(requireContext()).load(image).into(imgHeader);
+
+            /* ----- Tampilkan tombol Pesan Tiket jika with_event == 1 ----- */
+            if (withEvent == 1) {
+                btnOrder.setVisibility(View.VISIBLE);
+                btnOrder.setOnClickListener(v -> {
+                    Toast.makeText(getContext(),
+                            "Arahkan ke halaman pemesanan tiket", Toast.LENGTH_SHORT).show();
+                    // startActivity(new Intent(getContext(), TicketOrderActivity.class));
+                });
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "Format JSON salah", Toast.LENGTH_SHORT).show();
+        }
     }
 }
